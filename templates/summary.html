@@ -6,85 +6,126 @@
     <p>Topic: {{ topic }}</p>
 </div>
 
-<div class="score-overview">
-    <div class="score-label">Overall Score</div>
-    <div class="score-value">{{ scorecard.overall }}/5</div>
-</div>
-
-{% if signal.is_low_signal %}
-<div class="signal-warning">
-    <strong>Low-signal input detected:</strong> {{ signal.reason }}
-</div>
+{% set total_score = scorecard.communication + scorecard.depth + scorecard.tradeoffs + scorecard.structure %}
+{% if total_score <= 0 %}
+{% set total_score = 1 %}
 {% endif %}
+{% set comm_deg = (scorecard.communication / total_score * 360) %}
+{% set depth_deg = (scorecard.depth / total_score * 360) %}
+{% set trade_deg = (scorecard.tradeoffs / total_score * 360) %}
+{% set struct_deg = (scorecard.structure / total_score * 360) %}
+{% set stop_1 = comm_deg %}
+{% set stop_2 = comm_deg + depth_deg %}
+{% set stop_3 = comm_deg + depth_deg + trade_deg %}
 
-<h3 style="margin-top: 24px;">Rubric Breakdown</h3>
-<div class="rubric-grid">
-    <div class="rubric-item">
-        <div class="rubric-title">Communication</div>
-        <div class="rubric-score">{{ scorecard.communication }}/5</div>
-    </div>
-    <div class="rubric-item">
-        <div class="rubric-title">Depth</div>
-        <div class="rubric-score">{{ scorecard.depth }}/5</div>
-    </div>
-    <div class="rubric-item">
-        <div class="rubric-title">Trade-offs</div>
-        <div class="rubric-score">{{ scorecard.tradeoffs }}/5</div>
-    </div>
-    <div class="rubric-item">
-        <div class="rubric-title">Structure</div>
-        <div class="rubric-score">{{ scorecard.structure }}/5</div>
-    </div>
+<div class="report-layout">
+    <aside class="report-side">
+        <div class="score-overview">
+            <div class="score-label">Overall Score</div>
+            <div class="score-value">{{ scorecard.overall }}/5</div>
+        </div>
+
+        {% if signal.is_low_signal %}
+        <div class="signal-warning side-card">
+            <strong>Low-signal input detected:</strong> {{ signal.reason }}
+        </div>
+        {% endif %}
+
+        <div class="summary-card side-card info-card">
+            <h3 class="side-title">Status Breakdown</h3>
+            <div class="score-list">
+                <div class="score-row">
+                    <div class="score-name">Communication</div>
+                    {% set comm_width = scorecard.communication * 20 ~ '%' %}
+                    <div class="score-track"><div class="score-fill" {% if True %}style="width: {{ comm_width }};"{% endif %}></div></div>
+                    <div class="score-number">{{ scorecard.communication }}/5</div>
+                </div>
+                <div class="score-row">
+                    <div class="score-name">Depth</div>
+                    {% set depth_width = scorecard.depth * 20 ~ '%' %}
+                    <div class="score-track"><div class="score-fill" {% if True %}style="width: {{ depth_width }};"{% endif %}></div></div>
+                    <div class="score-number">{{ scorecard.depth }}/5</div>
+                </div>
+                <div class="score-row">
+                    <div class="score-name">Trade-offs</div>
+                    {% set trade_width = scorecard.tradeoffs * 20 ~ '%' %}
+                    <div class="score-track"><div class="score-fill" {% if True %}style="width: {{ trade_width }};"{% endif %}></div></div>
+                    <div class="score-number">{{ scorecard.tradeoffs }}/5</div>
+                </div>
+                <div class="score-row">
+                    <div class="score-name">Structure</div>
+                    {% set struct_width = scorecard.structure * 20 ~ '%' %}
+                    <div class="score-track"><div class="score-fill" {% if True %}style="width: {{ struct_width }};"{% endif %}></div></div>
+                    <div class="score-number">{{ scorecard.structure }}/5</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-card side-card info-card">
+            <h3 class="side-title">Strength Profile</h3>
+            <div class="pie-wrap">
+                {% set pie_bg = 'background: conic-gradient(#14b8a6 0deg ' ~ stop_1 ~ 'deg, #38bdf8 ' ~ stop_1 ~ 'deg ' ~ stop_2 ~ 'deg, #f59e0b ' ~ stop_2 ~ 'deg ' ~ stop_3 ~ 'deg, #a78bfa ' ~ stop_3 ~ 'deg 360deg);' %}
+                <div
+                    class="strength-pie"
+                    {% if True %}style="{{ pie_bg }}"{% endif %}
+                ></div>
+            </div>
+            {% if scorecard.highlights %}
+            <ul class="report-list side-list">
+                {% for item in scorecard.highlights %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="microcopy">No reliable strengths identified due to low-signal answers.</p>
+            {% endif %}
+        </div>
+
+        <div class="summary-card side-card info-card">
+            <h3 class="side-title">Improvement Suggestions</h3>
+            <ul class="report-list side-list">
+                {% for item in scorecard.areas_to_improve %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </aside>
+
+    <main class="report-main">
+        <section class="report-section">
+            <h3 class="section-title">Narrative Summary</h3>
+            <div class="summary-card narrative-card">
+                {{ summary }}
+            </div>
+        </section>
+
+        <section class="report-section">
+            <h3 class="section-title">Insights</h3>
+            <div class="summary-card compact-card insights-card">
+                <p><strong>Sentiment:</strong> {{ analysis.sentiment }}</p>
+                <p><strong>Top Keywords:</strong> {{ analysis.keywords | join(', ') if analysis.keywords else 'No strong keywords extracted.' }}</p>
+            </div>
+        </section>
+
+        <section class="report-section">
+            <h3 class="section-title">Transcript</h3>
+            <div class="summary-card transcript-card">
+                {% for q, a in qna_pairs %}
+                <div class="qna-pair">
+                    <div class="qna-q">Q: {{ q }}</div>
+                    <div class="qna-a">A: {{ a }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
 </div>
 
-<h3 style="margin-top: 24px;">Narrative Summary</h3>
-<div class="summary-card">
-    {{ summary }}
-</div>
-
-<h3 style="margin-top: 24px;">Strengths</h3>
-<div class="summary-card">
-    {% if scorecard.highlights %}
-    <ul class="report-list">
-        {% for item in scorecard.highlights %}
-        <li>{{ item }}</li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p>No reliable strengths identified due to low-signal answers.</p>
-    {% endif %}
-</div>
-
-<h3 style="margin-top: 24px;">Improvement Suggestions</h3>
-<div class="summary-card">
-    <ul class="report-list">
-        {% for item in scorecard.areas_to_improve %}
-        <li>{{ item }}</li>
-        {% endfor %}
-    </ul>
-</div>
-
-<h3 style="margin-top: 24px;">Quick Analysis</h3>
-<div class="summary-card">
-    <p><strong>Sentiment:</strong> {{ analysis.sentiment }}</p>
-    <p><strong>Top Keywords:</strong> {{ analysis.keywords | join(', ') if analysis.keywords else 'No strong keywords extracted.' }}</p>
-</div>
-
-<h3 style="margin-top: 30px;">Transcript</h3>
-<div class="summary-card">
-    {% for q, a in qna_pairs %}
-    <div class="qna-pair">
-        <div class="qna-q">Q: {{ q }}</div>
-        <div class="qna-a">A: {{ a }}</div>
-    </div>
-    {% endfor %}
-</div>
-
-<p style="text-align: center; margin-top: 20px; font-size: 14px; color: #64748b;">
+<p class="report-footer">
     This interview has been saved locally as {{ filename }}.
 </p>
 
-<div style="margin-top: 30px; text-align: center;">
+<div class="center-actions">
     <a href="{{ url_for('index') }}" style="text-decoration: none;">
         <button type="button">Start Another Interview</button>
     </a>

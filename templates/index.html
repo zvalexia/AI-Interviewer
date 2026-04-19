@@ -2,8 +2,14 @@
 
 {% block content %}
 <div class="header">
+    <span class="intro-badge">AI Interview Session</span>
     <h1>AI Interviewer</h1>
-    <p>Run a short structured interview on any topic, then review AI feedback and key themes.</p>
+    <p>Hey, I am your AI interviewer. I will ask focused questions on any topic you choose, then give you a structured evaluation with strengths, gaps, and practical improvement suggestions.</p>
+</div>
+
+<div class="hero-card">
+    <strong>How it works</strong>
+    <p class="microcopy">1) Pick a topic. 2) Answer 4-5 meaningful questions. 3) Review your final interview report.</p>
 </div>
 
 <form action="{{ url_for('index') }}" method="POST">
@@ -12,7 +18,7 @@
         <input type="text" id="topic" name="topic" placeholder="e.g. System Design, React.js, Project Management" required>
     </div>
 
-    <p style="margin-top: -8px; color: #334155; font-size: 14px;">
+    <p class="microcopy">
         You can enter any topic. The interviewer will generate 3-5 progressive questions.
     </p>
     
