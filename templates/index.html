@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header">
+    <h1>AI Interviewer</h1>
+    <p>Practice your interviewing skills with an AI powered by Gemini.</p>
+</div>
+
+<form action="{{ url_for('index') }}" method="POST">
+    <div class="form-group">
+        <label for="topic">What topic would you like to be interviewed on?</label>
+        <input type="text" id="topic" name="topic" placeholder="e.g. System Design, React.js, Project Management" required>
+    </div>
+    
+    <button type="submit">Start Interview</button>
+</form>
+{% endblock %}

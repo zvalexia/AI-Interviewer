@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header">
+    <h1>Interview Complete</h1>
+    <p>Topic: {{ topic }}</p>
+</div>
+
+<h3>AI Feedback & Summary</h3>
+<div class="summary-card">
+    {{ summary }}
+</div>
+
+<h3 style="margin-top: 30px;">Your Responses</h3>
+<div class="summary-card">
+    {% for q, a in qna_pairs %}
+    <div class="qna-pair">
+        <div class="qna-q">Q: {{ q }}</div>
+        <div class="qna-a">A: {{ a }}</div>
+    </div>
+    {% endfor %}
+</div>
+
+<p style="text-align: center; margin-top: 20px; font-size: 14px; color: #64748b;">
+    This interview has been saved locally as {{ filename }}.
+</p>
+
+<div style="margin-top: 30px; text-align: center;">
+    <a href="{{ url_for('index') }}" style="text-decoration: none;">
+        <button type="button">Start Another Interview</button>
+    </a>
+</div>
+{% endblock %}
