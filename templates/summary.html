@@ -2,16 +2,75 @@
 
 {% block content %}
 <div class="header">
-    <h1>Interview Complete</h1>
+    <h1>Interview Report</h1>
     <p>Topic: {{ topic }}</p>
 </div>
 
-<h3>AI Feedback & Summary</h3>
+<div class="score-overview">
+    <div class="score-label">Overall Score</div>
+    <div class="score-value">{{ scorecard.overall }}/5</div>
+</div>
+
+{% if signal.is_low_signal %}
+<div class="signal-warning">
+    <strong>Low-signal input detected:</strong> {{ signal.reason }}
+</div>
+{% endif %}
+
+<h3 style="margin-top: 24px;">Rubric Breakdown</h3>
+<div class="rubric-grid">
+    <div class="rubric-item">
+        <div class="rubric-title">Communication</div>
+        <div class="rubric-score">{{ scorecard.communication }}/5</div>
+    </div>
+    <div class="rubric-item">
+        <div class="rubric-title">Depth</div>
+        <div class="rubric-score">{{ scorecard.depth }}/5</div>
+    </div>
+    <div class="rubric-item">
+        <div class="rubric-title">Trade-offs</div>
+        <div class="rubric-score">{{ scorecard.tradeoffs }}/5</div>
+    </div>
+    <div class="rubric-item">
+        <div class="rubric-title">Structure</div>
+        <div class="rubric-score">{{ scorecard.structure }}/5</div>
+    </div>
+</div>
+
+<h3 style="margin-top: 24px;">Narrative Summary</h3>
 <div class="summary-card">
     {{ summary }}
 </div>
 
-<h3 style="margin-top: 30px;">Your Responses</h3>
+<h3 style="margin-top: 24px;">Strengths</h3>
+<div class="summary-card">
+    {% if scorecard.highlights %}
+    <ul class="report-list">
+        {% for item in scorecard.highlights %}
+        <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No reliable strengths identified due to low-signal answers.</p>
+    {% endif %}
+</div>
+
+<h3 style="margin-top: 24px;">Improvement Suggestions</h3>
+<div class="summary-card">
+    <ul class="report-list">
+        {% for item in scorecard.areas_to_improve %}
+        <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<h3 style="margin-top: 24px;">Quick Analysis</h3>
+<div class="summary-card">
+    <p><strong>Sentiment:</strong> {{ analysis.sentiment }}</p>
+    <p><strong>Top Keywords:</strong> {{ analysis.keywords | join(', ') if analysis.keywords else 'No strong keywords extracted.' }}</p>
+</div>
+
+<h3 style="margin-top: 30px;">Transcript</h3>
 <div class="summary-card">
     {% for q, a in qna_pairs %}
     <div class="qna-pair">

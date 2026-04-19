@@ -3,7 +3,15 @@ import json
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from dotenv import load_dotenv
-from utils.gemini_client import generate_questions, generate_summary
+from utils.gemini_client import (
+    generate_questions,
+    generate_summary,
+    extract_basic_analysis,
+    generate_scorecard,
+    assess_response_signal,
+    build_low_signal_summary,
+    build_low_signal_scorecard,
+)
 
 # Load environment variables (e.g., GEMINI_API_KEY)
 load_dotenv()
@@ -57,6 +65,7 @@ def interview():
         answers = session.get('answers', [])
         answers.append(answer.strip())
         session['answers'] = answers
+
         session['current_q'] += 1
         session.modified = True  # Required to ensure lists in session update properly
         
@@ -81,7 +90,15 @@ def summary():
     
     # Prepare data
     qna_pairs = list(zip(questions, answers))
-    summary_text = generate_summary(qna_pairs)
+    signal = assess_response_signal(answers)
+    if signal["is_low_signal"]:
+        summary_text = build_low_signal_summary(topic, signal)
+        scorecard = build_low_signal_scorecard()
+    else:
+        summary_text = generate_summary(topic, qna_pairs)
+        scorecard = generate_scorecard(topic, qna_pairs)
+
+    local_analysis = extract_basic_analysis(answers)
     
     # Save to JSON
     timestamp = datetime.now().isoformat()
@@ -90,6 +107,9 @@ def summary():
         "questions": questions,
         "answers": answers,
         "summary": summary_text,
+        "scorecard": scorecard,
+        "analysis": local_analysis,
+        "signal": signal,
         "timestamp": timestamp
     }
     
@@ -106,8 +126,11 @@ def summary():
         topic=topic, 
         qna_pairs=qna_pairs, 
         summary=summary_text,
+        scorecard=scorecard,
+        analysis=local_analysis,
+        signal=signal,
         filename=filename
     )
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)

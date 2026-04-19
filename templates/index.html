@@ -3,7 +3,7 @@
 {% block content %}
 <div class="header">
     <h1>AI Interviewer</h1>
-    <p>Practice your interviewing skills with an AI powered by Gemini.</p>
+    <p>Run a short structured interview on any topic, then review AI feedback and key themes.</p>
 </div>
 
 <form action="{{ url_for('index') }}" method="POST">
@@ -11,6 +11,10 @@
         <label for="topic">What topic would you like to be interviewed on?</label>
         <input type="text" id="topic" name="topic" placeholder="e.g. System Design, React.js, Project Management" required>
     </div>
+
+    <p style="margin-top: -8px; color: #334155; font-size: 14px;">
+        You can enter any topic. The interviewer will generate 3-5 progressive questions.
+    </p>
     
     <button type="submit">Start Interview</button>
 </form>

@@ -4,7 +4,7 @@ This document provides specialized instructions for AI coding assistants working
 
 ## Architecture & Tech Stack
 - **Framework**: Python 3 with Flask.
-- **AI Integration**: `google-generativeai` (Gemini 1.5 Flash).
+- **AI Integration**: `google-generativeai` (Gemini models selected dynamically from available `generateContent` models).
 - **Frontend**: Standard HTML, Jinja2 templating, and vanilla CSS.
 - **Data Storage**: Local JSON files.
 
