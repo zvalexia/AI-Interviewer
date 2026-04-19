@@ -1,27 +1,39 @@
 {% extends "base.html" %}
+{% block title %}AI Interviewer — Start{% endblock %}
+{% block nav_label %}New Interview{% endblock %}
 
 {% block content %}
-<div class="header">
-    <span class="intro-badge">AI Interview Session</span>
+<div class="index-center">
+    <span class="intro-badge">AI-Powered Technical Assessment</span>
     <h1>AI Interviewer</h1>
-    <p>Hey, I am your AI interviewer. I will ask focused questions on any topic you choose, then give you a structured evaluation with strengths, gaps, and practical improvement suggestions.</p>
+    <p class="index-subtitle">A structured interview experience. Choose a topic, answer focused questions, and receive a detailed evaluation report designed for hiring teams.</p>
 </div>
 
 <div class="hero-card">
     <strong>How it works</strong>
-    <p class="microcopy">1) Pick a topic. 2) Answer 4-5 meaningful questions. 3) Review your final interview report.</p>
+    <div class="steps">
+        <div class="step">
+            <span class="step-num">1</span>
+            <span class="step-text">Choose a topic for your interview</span>
+        </div>
+        <div class="step">
+            <span class="step-num">2</span>
+            <span class="step-text">Answer 4–5 progressively deeper questions</span>
+        </div>
+        <div class="step">
+            <span class="step-num">3</span>
+            <span class="step-text">Review your scored evaluation report</span>
+        </div>
+    </div>
 </div>
 
 <form action="{{ url_for('index') }}" method="POST">
     <div class="form-group">
-        <label for="topic">What topic would you like to be interviewed on?</label>
-        <input type="text" id="topic" name="topic" placeholder="e.g. System Design, React.js, Project Management" required>
+        <label for="topic">Interview topic</label>
+        <input type="text" id="topic" name="topic" placeholder="e.g. System Design, React.js, Data Structures" required>
+        <p class="microcopy">Enter any technical or professional topic. The AI will generate targeted questions.</p>
     </div>
 
-    <p class="microcopy">
-        You can enter any topic. The interviewer will generate 3-5 progressive questions.
-    </p>
-    
-    <button type="submit">Start Interview</button>
+    <button type="submit" class="btn btn--primary">Start Interview →</button>
 </form>
 {% endblock %}

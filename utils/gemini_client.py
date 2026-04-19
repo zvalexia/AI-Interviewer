@@ -4,7 +4,7 @@ from collections import Counter
 import google.generativeai as genai
 
 
-DEFAULT_QUESTION_COUNT = 4
+DEFAULT_QUESTION_COUNT = 5
 MODEL_PREFERENCES = [
     "models/gemini-2.5-flash",
     "models/gemini-2.0-flash",
@@ -125,15 +125,15 @@ def build_low_signal_summary(topic, signal):
 
 def build_low_signal_scorecard():
     return {
-        "communication": 1,
-        "depth": 1,
-        "tradeoffs": 1,
-        "structure": 1,
-        "overall": 1,
+        "communication": 0,
+        "depth": 0,
+        "tradeoffs": 0,
+        "structure": 0,
+        "overall": 0,
         "highlights": [],
         "areas_to_improve": [
-            "Use complete sentences with concrete examples.",
-            "Explain constraints, decisions, and trade-offs in each answer.",
+            "Provide complete, substantive responses with concrete examples.",
+            "Address constraints, decisions, and trade-offs in each answer.",
         ],
     }
 
@@ -181,17 +181,17 @@ def _fallback_scorecard(answers):
     avg_words = sum(word_counts) / len(word_counts) if word_counts else 0
 
     if avg_words >= 45:
-        depth = 4
+        depth = 7
     elif avg_words >= 25:
-        depth = 3
+        depth = 5
     else:
-        depth = 2
+        depth = 3
 
-    structure = 4 if any(
+    structure = 7 if any(
         marker in " ".join(answers).lower() for marker in ["first", "then", "because", "therefore", "finally"]
-    ) else 3
-    communication = 4 if avg_words >= 30 else 3
-    tradeoffs = 4 if "trade" in " ".join(answers).lower() else 2
+    ) else 5
+    communication = 7 if avg_words >= 30 else 5
+    tradeoffs = 6 if "trade" in " ".join(answers).lower() else 3
     overall = round((communication + depth + tradeoffs + structure) / 4)
 
     return {
@@ -201,12 +201,12 @@ def _fallback_scorecard(answers):
         "structure": structure,
         "overall": overall,
         "highlights": [
-            "Clear baseline understanding of the topic.",
-            "Some practical context included in responses.",
+            "Demonstrates baseline understanding of the topic.",
+            "Includes some practical context in responses.",
         ],
         "areas_to_improve": [
-            "Use more concrete examples and measurable outcomes.",
-            "Explicitly discuss constraints and trade-offs.",
+            "Provide concrete examples with measurable outcomes.",
+            "Explicitly discuss constraints, alternatives, and trade-offs.",
         ],
     }
 
@@ -216,15 +216,22 @@ def generate_scorecard(topic, qna_pairs):
     try:
         context = "\n\n".join([f"Q: {q}\nA: {a}" for q, a in qna_pairs])
         prompt = (
-            "You are an interview evaluator. Return ONLY valid JSON.\n"
+            "You are a senior technical hiring evaluator producing a scorecard for a hiring committee. "
+            "Return ONLY valid JSON with no extra text or markdown.\n\n"
             f"Topic: {topic}\n\n"
-            "Evaluate the candidate on a 1-5 scale with these keys:\n"
-            "communication, depth, tradeoffs, structure, overall, highlights, areas_to_improve\n"
-            "Rules:\n"
-            "- Numeric keys must be integers 1-5\n"
-            "- overall should reflect the other scores\n"
-            "- highlights and areas_to_improve must each contain exactly 2 short bullet strings\n"
-            "Return only one JSON object with those keys and no extra text.\n\n"
+            "Evaluate the candidate on a 0-10 integer scale (0 = no demonstrated competence, "
+            "5 = meets expectations, 8 = exceeds expectations, 10 = exceptional) for each dimension:\n\n"
+            "- communication: Clarity, conciseness, and ability to articulate ideas\n"
+            "- depth: Technical depth, specificity, and domain knowledge demonstrated\n"
+            "- tradeoffs: Ability to reason about trade-offs, constraints, and alternatives\n"
+            "- structure: Logical organization and coherent argumentation\n"
+            "- overall: Holistic assessment reflecting all dimensions (not a simple average)\n\n"
+            "Also provide:\n"
+            "- highlights: exactly 3 specific strengths observed (short bullet strings)\n"
+            "- areas_to_improve: exactly 3 actionable improvement areas (short bullet strings)\n\n"
+            "Be rigorous and calibrated. A score of 5 means 'adequate'. "
+            "Most candidates should score between 4-7. Reserve 8+ for genuinely strong answers "
+            "with concrete examples, nuanced reasoning, and clear expertise.\n\n"
             f"Transcript:\n{context}"
         )
         raw = _generate_text(prompt)
@@ -244,13 +251,13 @@ def generate_scorecard(topic, qna_pairs):
                 raise ValueError(f"Missing scorecard key: {key}")
 
         for key in ["communication", "depth", "tradeoffs", "structure", "overall"]:
-            parsed[key] = max(1, min(5, int(parsed[key])))
+            parsed[key] = max(0, min(10, int(parsed[key])))
 
         if not isinstance(parsed["highlights"], list) or not isinstance(parsed["areas_to_improve"], list):
             raise ValueError("Highlights/improvement fields are not lists.")
 
-        parsed["highlights"] = [str(x) for x in parsed["highlights"][:2]]
-        parsed["areas_to_improve"] = [str(x) for x in parsed["areas_to_improve"][:2]]
+        parsed["highlights"] = [str(x) for x in parsed["highlights"][:3]]
+        parsed["areas_to_improve"] = [str(x) for x in parsed["areas_to_improve"][:3]]
         if len(parsed["highlights"]) < 2 or len(parsed["areas_to_improve"]) < 2:
             raise ValueError("Insufficient bullet points in scorecard response.")
 
@@ -262,10 +269,17 @@ def generate_scorecard(topic, qna_pairs):
 def generate_questions(topic):
     try:
         prompt = (
-            "You are an interviewer. Generate exactly 4 short, high-signal interview questions "
-            f"for this topic: {topic}. "
-            "Order them progressively from broad context to practical depth. "
-            "Return only the questions, one per line, with no numbering or bullets."
+            "You are a senior technical interviewer conducting a structured evaluation. "
+            f"Generate exactly 5 interview questions for this topic: {topic}.\n\n"
+            "Question design principles:\n"
+            "1. Start with a broad context question to assess overall familiarity\n"
+            "2. Progress to specific technical scenarios requiring concrete examples\n"
+            "3. Include at least one question about trade-offs or design decisions\n"
+            "4. Include one question that tests depth through a real-world problem\n"
+            "5. End with a question about lessons learned or how they would approach something differently\n\n"
+            "Questions should be open-ended, require substantive answers, and reveal the candidate's "
+            "actual experience level. Avoid yes/no or trivia-style questions.\n\n"
+            "Return only the questions, one per line, with no numbering, bullets, or extra text."
         )
         raw_text = _generate_text(prompt)
         questions = _sanitize_questions(raw_text, max_count=5)
@@ -276,10 +290,11 @@ def generate_questions(topic):
     except Exception as e:
         print(f"Error generating questions: {e}")
         return [
-            f"What is your general experience with {topic}?",
-            "What do you consider the biggest challenges in this area?",
-            "Can you provide a specific example of applying this in a project?",
-            "If you had to improve one thing in your approach, what would it be?"
+            f"Walk me through your experience with {topic} and where you've applied it most significantly.",
+            f"Describe a specific challenge you faced working with {topic} and how you resolved it.",
+            f"What trade-offs have you had to consider when making decisions related to {topic}?",
+            f"Can you walk me through a real project where {topic} played a critical role in the outcome?",
+            f"Looking back, what would you do differently in your approach to {topic} and why?",
         ]
 
 
@@ -287,16 +302,22 @@ def generate_summary(topic, qna_pairs):
     try:
         context = "\n\n".join([f"Q: {q}\nA: {a}" for q, a in qna_pairs])
         prompt = (
-            "You are an interview evaluator.\n"
+            "You are a senior hiring evaluator writing a debrief summary for a hiring committee. "
+            "Your audience is hiring managers and senior engineers who need to make a go/no-go decision.\n\n"
             f"Topic: {topic}\n\n"
-            "Given the transcript below, produce this exact structure:\n"
-            "Narrative Summary:\n"
-            "<4-6 sentence cohesive assessment paragraph>\n\n"
-            "Key Themes:\n"
-            "- 3 concise bullets\n"
-            "- 3 concise bullets\n"
-            "- 3 concise bullets\n\n"
-            "Keep the tone professional, specific, and evidence-based.\n\n"
+            "Write the following sections using plain text (no markdown headers or formatting):\n\n"
+            "EXECUTIVE SUMMARY\n"
+            "A 3-4 sentence assessment of the candidate's demonstrated competence. "
+            "Reference specific answers. State whether the candidate showed surface-level or deep understanding. "
+            "Note the strongest and weakest areas.\n\n"
+            "KEY OBSERVATIONS\n"
+            "- 3-4 specific, evidence-based observations from the transcript\n"
+            "- Each observation should cite what the candidate said or failed to address\n\n"
+            "HIRING RECOMMENDATION\n"
+            "A 1-2 sentence recommendation for the hiring team, indicating confidence level "
+            "and any follow-up areas to probe in subsequent rounds.\n\n"
+            "Keep the tone professional, direct, and evidence-based. Avoid generic praise. "
+            "If answers were vague, say so explicitly.\n\n"
             f"Transcript:\n{context}"
         )
 

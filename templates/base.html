@@ -3,22 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Interviewer</title>
+    <title>{% block title %}AI Interviewer{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for message in messages %}
-                        {{ message }}<br>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-        
-        {% block content %}{% endblock %}
+    <div class="page-wrapper">
+        <nav class="top-bar">
+            <span class="top-bar-logo">AI Interviewer</span>
+            <span class="top-bar-sep">/</span>
+            <span class="top-bar-label">{% block nav_label %}Home{% endblock %}</span>
+        </nav>
+
+        <div class="container {% block container_class %}{% endblock %}">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            {{ message }}<br>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
     </div>
 </body>
 </html>
