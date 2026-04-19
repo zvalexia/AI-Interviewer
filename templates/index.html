@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}AI Interviewer — Start{% endblock %}
+{% block title %}AI Interviewer — Start Session{% endblock %}
 {% block nav_label %}New Interview{% endblock %}
 
 {% block content %}
-<div class="index-center">
-    <span class="intro-badge">AI-Powered Technical Assessment</span>
+<div class="index-hero">
+    <span class="badge badge--accent">AI-Powered Assessment</span>
     <h1>AI Interviewer</h1>
-    <p class="index-subtitle">A structured interview experience. Choose a topic, answer focused questions, and receive a detailed evaluation report designed for hiring teams.</p>
+    <p class="index-subtitle">Structured technical interviews with AI-generated questions and detailed evaluation reports built for hiring teams.</p>
 </div>
 
 <div class="hero-card">
@@ -22,7 +22,7 @@
         </div>
         <div class="step">
             <span class="step-num">3</span>
-            <span class="step-text">Review your scored evaluation report</span>
+            <span class="step-text">Receive a scored evaluation report</span>
         </div>
     </div>
 </div>
@@ -30,7 +30,7 @@
 <form action="{{ url_for('index') }}" method="POST">
     <div class="form-group">
         <label for="topic">Interview topic</label>
-        <input type="text" id="topic" name="topic" placeholder="e.g. System Design, React.js, Data Structures" required>
+        <input type="text" id="topic" name="topic" placeholder="e.g. System Design, React.js, Data Structures" autocomplete="off" required>
         <p class="microcopy">Enter any technical or professional topic. The AI will generate targeted questions.</p>
     </div>
 

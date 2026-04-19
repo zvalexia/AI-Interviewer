@@ -1,15 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Interview Report — {{ topic }}{% endblock %}
-{% block nav_label %}Interview Report{% endblock %}
+{% block nav_label %}Evaluation Report{% endblock %}
 {% block container_class %}container--wide{% endblock %}
 
 {% block content %}
 <div class="report-header">
-    <span class="intro-badge">Evaluation Complete</span>
+    <span class="badge badge--accent">Evaluation Complete</span>
     <h1>Interview Report</h1>
     <div class="report-meta">
-        <span class="report-meta-item">Topic: <strong>&nbsp;{{ topic }}</strong></span>
-        <span class="report-meta-item">Questions: <strong>&nbsp;{{ qna_pairs|length }}</strong></span>
+        <span class="report-meta-item">Topic: <strong>{{ topic }}</strong></span>
+        <span class="report-meta-sep"></span>
+        <span class="report-meta-item">Questions: <strong>{{ qna_pairs|length }}</strong></span>
     </div>
 </div>
 
@@ -17,8 +18,8 @@
     <main class="report-main">
         {% if signal.is_low_signal %}
         <div class="signal-warning">
-            <strong>⚠ Low-signal responses detected.</strong> {{ signal.reason }}
-            Scores below may not reflect actual ability.
+            <strong>⚠ Low-signal responses detected</strong>
+            {{ signal.reason }} Scores below may not accurately reflect actual ability.
         </div>
         {% endif %}
 
@@ -57,9 +58,20 @@
     </main>
 
     <aside class="report-side">
-        <div class="score-overview">
-            <div class="score-label">Overall Score</div>
-            <div class="score-value">{{ scorecard.overall }}<span>/10</span></div>
+        <div class="score-ring-wrap">
+            <div class="score-ring">
+                <svg viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="54" class="score-ring__track"/>
+                    {% set ring_offset = 339.29 - (339.29 * scorecard.overall / 10) %}
+                    <circle cx="60" cy="60" r="54"
+                        class="score-ring__fill {% if scorecard.overall >= 7 %}score-ring__fill--green{% elif scorecard.overall >= 5 %}score-ring__fill--amber{% else %}score-ring__fill--red{% endif %}"
+                        style="stroke-dashoffset: {{ ring_offset }};"/>
+                </svg>
+                <div class="score-ring__content">
+                    <span class="score-ring__value">{{ scorecard.overall }}</span>
+                    <span class="score-ring__max">/10</span>
+                </div>
+            </div>
             <div class="score-verdict">
                 {% if scorecard.overall >= 8 %}Strong Candidate
                 {% elif scorecard.overall >= 6 %}Competent
@@ -68,10 +80,9 @@
             </div>
         </div>
 
-        {% set overall = scorecard.overall %}
-        <div class="hiring-signal {% if overall >= 7 %}hiring-signal--strong{% elif overall >= 5 %}hiring-signal--moderate{% else %}hiring-signal--weak{% endif %}">
-            {% if overall >= 7 %}● Strong Hire Signal
-            {% elif overall >= 5 %}● Moderate Signal
+        <div class="hiring-signal {% if scorecard.overall >= 7 %}hiring-signal--strong{% elif scorecard.overall >= 5 %}hiring-signal--moderate{% else %}hiring-signal--weak{% endif %}">
+            {% if scorecard.overall >= 7 %}● Strong Hire Signal
+            {% elif scorecard.overall >= 5 %}● Moderate Signal
             {% else %}● Weak Signal{% endif %}
         </div>
 
@@ -80,27 +91,23 @@
             <div class="score-list">
                 <div class="score-row">
                     <div class="score-name">Communication</div>
-                    {% set comm_width = scorecard.communication * 10 ~ '%' %}
-                    <div class="score-track"><div class="score-fill" style="width: {{ comm_width }};"></div></div>
                     <div class="score-number">{{ scorecard.communication }}/10</div>
+                    <div class="score-track"><div class="score-fill" style="width: {{ scorecard.communication * 10 }}%;"></div></div>
                 </div>
                 <div class="score-row">
                     <div class="score-name">Technical Depth</div>
-                    {% set depth_width = scorecard.depth * 10 ~ '%' %}
-                    <div class="score-track"><div class="score-fill" style="width: {{ depth_width }};"></div></div>
                     <div class="score-number">{{ scorecard.depth }}/10</div>
+                    <div class="score-track"><div class="score-fill" style="width: {{ scorecard.depth * 10 }}%;"></div></div>
                 </div>
                 <div class="score-row">
                     <div class="score-name">Trade-off Analysis</div>
-                    {% set trade_width = scorecard.tradeoffs * 10 ~ '%' %}
-                    <div class="score-track"><div class="score-fill" style="width: {{ trade_width }};"></div></div>
                     <div class="score-number">{{ scorecard.tradeoffs }}/10</div>
+                    <div class="score-track"><div class="score-fill" style="width: {{ scorecard.tradeoffs * 10 }}%;"></div></div>
                 </div>
                 <div class="score-row">
                     <div class="score-name">Structure & Clarity</div>
-                    {% set struct_width = scorecard.structure * 10 ~ '%' %}
-                    <div class="score-track"><div class="score-fill" style="width: {{ struct_width }};"></div></div>
                     <div class="score-number">{{ scorecard.structure }}/10</div>
+                    <div class="score-track"><div class="score-fill" style="width: {{ scorecard.structure * 10 }}%;"></div></div>
                 </div>
             </div>
         </div>
