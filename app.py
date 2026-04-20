@@ -36,6 +36,7 @@ def index():
         session['topic'] = topic.strip()
         session['questions'] = generate_questions(session['topic'])
         session['answers'] = []
+        session['flags'] = []
         session['current_q'] = 0
         
         return redirect(url_for("interview"))
@@ -57,6 +58,9 @@ def interview():
 
     if request.method == "POST":
         answer = request.form.get("answer")
+        pasted = request.form.get("pasted") == "true"
+        lost_focus = request.form.get("lost_focus") == "true"
+        
         if not answer or not answer.strip():
             flash("Please provide an answer before continuing.")
             return redirect(url_for("interview"))
@@ -65,6 +69,10 @@ def interview():
         answers = session.get('answers', [])
         answers.append(answer.strip())
         session['answers'] = answers
+        
+        flags = session.get('flags', [])
+        flags.append({"pasted": pasted, "lost_focus": lost_focus})
+        session['flags'] = flags
 
         session['current_q'] += 1
         session.modified = True  # Required to ensure lists in session update properly
@@ -87,6 +95,7 @@ def summary():
     questions = session['questions']
     answers = session['answers']
     topic = session['topic']
+    flags = session.get('flags', [])
     
     # Prepare data
     qna_pairs = list(zip(questions, answers))
@@ -106,6 +115,7 @@ def summary():
         "topic": topic,
         "questions": questions,
         "answers": answers,
+        "flags": flags,
         "summary": summary_text,
         "scorecard": scorecard,
         "analysis": local_analysis,
@@ -125,6 +135,7 @@ def summary():
         "summary.html", 
         topic=topic, 
         qna_pairs=qna_pairs, 
+        flags=flags,
         summary=summary_text,
         scorecard=scorecard,
         analysis=local_analysis,

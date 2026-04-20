@@ -46,8 +46,13 @@
             <h3 class="section-title">Full Transcript</h3>
             <div class="transcript-card">
                 {% for q, a in qna_pairs %}
+                {% set f = flags[loop.index0] if flags else {} %}
                 <div class="qna-pair">
-                    <div class="qna-label qna-label--q">Question {{ loop.index }}</div>
+                    <div class="qna-label qna-label--q">
+                        Question {{ loop.index }}
+                        {% if f.pasted %}<span class="cheat-flag" title="Content was pasted from clipboard">🚩 Pasted Content</span>{% endif %}
+                        {% if f.lost_focus %}<span class="cheat-flag" title="Tab lost focus during question">👁️ Tab Switched</span>{% endif %}
+                    </div>
                     <div class="qna-q">{{ q }}</div>
                     <div class="qna-label qna-label--a">Candidate Response</div>
                     <div class="qna-a">{{ a }}</div>

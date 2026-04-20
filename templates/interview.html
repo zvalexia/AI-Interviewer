@@ -13,7 +13,7 @@
     <span class="progress-count">{{ current }} of {{ total }}</span>
 </div>
 <div class="progress-bar">
-    <div class="progress-fill" style="width: {{ (current - 1) / total * 100 }}%;"></div>
+    <div class="progress-fill" {% if True %}style="width: {{ (current - 1) / total * 100 }}%;"{% endif %}></div>
 </div>
 
 <div class="question-card">
@@ -32,6 +32,8 @@
 </div>
 
 <form id="interview-form" action="{{ url_for('interview') }}" method="POST">
+    <input type="hidden" name="pasted" id="pasted-flag" value="false">
+    <input type="hidden" name="lost_focus" id="focus-flag" value="false">
     <div class="form-group">
         <div class="form-header">
             <label for="answer">Your response</label>
@@ -59,11 +61,35 @@
 </div>
 
 <script>
+    // --- GLOBAL ELEMENTS ---
+    const textarea = document.getElementById('answer');
+    const wordCountDisplay = document.getElementById('word-count');
+    const submitBtn = document.getElementById('submit-btn');
+    const form = document.getElementById('interview-form');
+
+    // --- ANTI-CHEAT CAPTURE ---
+    const pastedInput = document.getElementById('pasted-flag');
+    const focusInput = document.getElementById('focus-flag');
+
+    textarea.addEventListener('paste', () => {
+        pastedInput.value = 'true';
+    });
+
+    window.addEventListener('blur', () => {
+        focusInput.value = 'true';
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            focusInput.value = 'true';
+        }
+    });
+
     // --- SHOW LOADING SCREEN ON FINAL SUBMIT ---
     document.getElementById('interview-form').addEventListener('submit', function() {
-        {% if current == total %}
+        /* {% if current == total %} */
         document.getElementById('loading-overlay').style.display = 'flex';
-        {% endif %}
+        /* {% endif %} */
     });
 
     // --- 4 MINUTE TIMER (240s) ---
@@ -71,7 +97,6 @@
     let timeLeft = TIME_LIMIT;
     const timerDisplay = document.getElementById('time-display');
     const timerBar = document.getElementById('timer-bar');
-    const form = document.getElementById('interview-form');
 
     let timerInterval = setInterval(() => {
         timeLeft--;
@@ -92,9 +117,6 @@
     }, 1000);
 
     // --- 200 WORD LIMIT & SUBMIT STATE ---
-    const textarea = document.getElementById('answer');
-    const wordCountDisplay = document.getElementById('word-count');
-    const submitBtn = document.getElementById('submit-btn');
     const MAX_WORDS = 200;
 
     textarea.addEventListener('input', () => {

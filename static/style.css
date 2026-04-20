@@ -724,6 +724,22 @@ textarea {
 .qna-label--q { color: var(--text-faint); }
 .qna-label--a { color: var(--primary-dark); }
 
+.cheat-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--red);
+    background: var(--red-wash);
+    border: 1px solid #f5c8c2;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 0.65rem;
+    margin-left: 8px;
+    letter-spacing: 0;
+    text-transform: none;
+    font-weight: 600;
+}
+
 .qna-q {
     font-weight: 500;
     font-size: 1rem;
