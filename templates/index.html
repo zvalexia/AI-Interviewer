@@ -36,4 +36,19 @@
 
     <button type="submit" class="btn btn--primary">Start Interview →</button>
 </form>
+
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Generating Questions...</div>
+    <div class="loading-subtext">The AI is constructing an adaptive interview for your topic. This takes a few seconds.</div>
+</div>
+
+<script>
+    const form = document.querySelector('form');
+    if(form) {
+        form.addEventListener('submit', function() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        });
+    }
+</script>
 {% endblock %}

@@ -21,16 +21,147 @@
     <p class="question-text">{{ question }}</p>
 </div>
 
-<form action="{{ url_for('interview') }}" method="POST">
+<div class="timer-wrap">
+    <div class="timer-header">
+        <span>Time Remaining</span>
+        <span id="time-display">04:00</span>
+    </div>
+    <div class="timer-bar-wrap">
+        <div class="timer-bar" id="timer-bar"></div>
+    </div>
+</div>
+
+<form id="interview-form" action="{{ url_for('interview') }}" method="POST">
     <div class="form-group">
-        <label for="answer">Your response</label>
+        <div class="form-header">
+            <label for="answer">Your response</label>
+            <div class="form-controls">
+                <button type="button" id="mic-btn" class="mic-btn" title="Browser-Native Dictation">
+                    <span class="mic-icon">🎙️</span> Speech-to-Text
+                </button>
+                <div class="word-counter" id="word-count">0 / 200 words</div>
+            </div>
+        </div>
         <textarea id="answer" name="answer" rows="7" placeholder="Provide a detailed answer with specific examples, constraints, and trade-offs where relevant…" required></textarea>
     </div>
 
     <p class="interview-tip">Stronger answers include concrete examples, measurable outcomes, and discussion of trade-offs.</p>
 
-    <button type="submit" class="btn btn--primary">
+    <button type="submit" class="btn btn--primary" id="submit-btn" disabled>
         {% if current < total %}Submit & Next Question →{% else %}Submit & View Report →{% endif %}
     </button>
 </form>
+
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Evaluating Responses...</div>
+    <div class="loading-subtext">The AI is scoring your answers and building a detailed narrative report. This may take up to 20 seconds.</div>
+</div>
+
+<script>
+    // --- SHOW LOADING SCREEN ON FINAL SUBMIT ---
+    document.getElementById('interview-form').addEventListener('submit', function() {
+        {% if current == total %}
+        document.getElementById('loading-overlay').style.display = 'flex';
+        {% endif %}
+    });
+
+    // --- 4 MINUTE TIMER (240s) ---
+    const TIME_LIMIT = 240; 
+    let timeLeft = TIME_LIMIT;
+    const timerDisplay = document.getElementById('time-display');
+    const timerBar = document.getElementById('timer-bar');
+    const form = document.getElementById('interview-form');
+
+    let timerInterval = setInterval(() => {
+        timeLeft--;
+        let min = Math.floor(timeLeft / 60);
+        let sec = timeLeft % 60;
+        timerDisplay.textContent = `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+        
+        let percent = (timeLeft / TIME_LIMIT) * 100;
+        timerBar.style.width = percent + '%';
+
+        if (percent < 25) { timerBar.classList.add('danger'); }
+        else if (percent < 50) { timerBar.classList.add('warning'); }
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            form.submit(); // Auto submit when time runs out
+        }
+    }, 1000);
+
+    // --- 200 WORD LIMIT & SUBMIT STATE ---
+    const textarea = document.getElementById('answer');
+    const wordCountDisplay = document.getElementById('word-count');
+    const submitBtn = document.getElementById('submit-btn');
+    const MAX_WORDS = 200;
+
+    textarea.addEventListener('input', () => {
+        let words = textarea.value.trim().split(/\s+/).filter(w => w.length > 0);
+        
+        if (words.length > MAX_WORDS) {
+            // Trim down exactly to 200 words
+            const trimmed = words.slice(0, MAX_WORDS).join(" ");
+            textarea.value = trimmed + " "; // Retain natural space flow
+            words = trimmed.split(" ");
+        }
+
+        wordCountDisplay.textContent = `${words.length} / ${MAX_WORDS} words`;
+        
+        if (words.length >= MAX_WORDS) {
+            wordCountDisplay.classList.add('limit-reached');
+        } else {
+            wordCountDisplay.classList.remove('limit-reached');
+        }
+
+        // Enable submit button only if non-empty
+        submitBtn.disabled = words.length === 0;
+    });
+
+    // --- SPEECH RECOGNITION API (Free Native Alternative to Whisper) ---
+    const micBtn = document.getElementById('mic-btn');
+    let recognition;
+    let isRecording = false;
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        
+        recognition.onresult = (event) => {
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript + ' ';
+                }
+            }
+            if (finalTranscript) {
+                textarea.value += finalTranscript;
+                textarea.dispatchEvent(new Event('input')); // Trigger word limit logic
+            }
+        };
+
+        recognition.onend = () => {
+            isRecording = false;
+            micBtn.classList.remove('recording');
+            micBtn.innerHTML = '<span class="mic-icon">🎙️</span> Speech-to-Text';
+        };
+
+        micBtn.addEventListener('click', () => {
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+                isRecording = true;
+                micBtn.classList.add('recording');
+                micBtn.innerHTML = '<span class="mic-icon">🛑</span> Stop Recording';
+            }
+        });
+    } else {
+        micBtn.style.display = 'none'; // Hide if browser doesn't support
+        alert('Speech-to-text is not supported in this browser. Try Chrome or Edge.');
+    }
+</script>
 {% endblock %}
