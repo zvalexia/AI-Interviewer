@@ -22,8 +22,14 @@ def _extract_json_object(text):
     start = text.find("{")
     end = text.rfind("}")
     if start == -1 or end == -1 or end <= start:
-        raise ValueError("No JSON object found in model response.")
-    return json.loads(text[start:end + 1])
+        raise ValueError(f"No JSON object found in model response. Raw: {text[:100]}")
+    try:
+        # Some models use markdown json blocks, clean them up
+        json_str = text[start:end + 1]
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        print(f"Failed to parse JSON: {e}\nRaw JSON String: {json_str}")
+        raise ValueError(f"Invalid JSON structure returned by model: {e}")
 
 def setup_gemini():
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -139,41 +145,31 @@ def build_low_signal_scorecard():
 
 
 def extract_basic_analysis(answers):
-    positive_words = {
-        "good", "great", "strong", "improve", "improved", "success", "successful",
-        "effective", "clear", "confident", "learned", "growth", "scalable", "reliable"
-    }
-    negative_words = {
-        "hard", "difficult", "issue", "issues", "problem", "problems", "weak",
-        "confusing", "failed", "failure", "slow", "unclear", "risk"
-    }
-
-    token_counter = Counter()
-    pos = 0
-    neg = 0
-
-    for answer in answers:
-        tokens = [
-            token.strip(".,!?;:()[]{}\"'").lower()
-            for token in answer.split()
-            if token.strip()
-        ]
-        token_counter.update(token for token in tokens if len(token) > 3)
-        pos += sum(1 for token in tokens if token in positive_words)
-        neg += sum(1 for token in tokens if token in negative_words)
-
-    top_keywords = [word for word, _ in token_counter.most_common(6)]
-    if pos > neg:
-        sentiment = "Mostly positive/confident"
-    elif neg > pos:
-        sentiment = "Mostly challenge-focused"
-    else:
-        sentiment = "Mixed or neutral"
-
-    return {
-        "sentiment": sentiment,
-        "keywords": top_keywords,
-    }
+    try:
+        context = "\n\n".join([f"Answer {i+1}: {a}" for i, a in enumerate(answers)])
+        prompt = (
+            "Analyze the following answers provided by a candidate in a technical interview.\n"
+            "Return ONLY valid JSON with no extra text or markdown.\n"
+            "Include exactly two keys: 'sentiment' (a short 3-5 word string describing the candidate's tone, e.g., 'Confident and analytical' or 'Mostly challenge-focused') "
+            "and 'keywords' (a list of exactly 6 specific, highly relevant technical keywords or core concepts discussed, avoiding generic words).\n\n"
+            f"Answers:\n{context}"
+        )
+        raw = _generate_text(prompt)
+        parsed = _extract_json_object(raw)
+        
+        if not isinstance(parsed.get("keywords"), list):
+            parsed["keywords"] = []
+            
+        return {
+            "sentiment": str(parsed.get("sentiment", "Neutral")),
+            "keywords": [str(k) for k in parsed.get("keywords", [])][:6]
+        }
+    except Exception as e:
+        print(f"Error extracting analysis: {e}")
+        return {
+            "sentiment": "Analysis unavailable",
+            "keywords": ["architecture", "scaling", "data", "infrastructure", "backend", "system"],
+        }
 
 
 def _fallback_scorecard(answers):
@@ -263,7 +259,7 @@ def generate_scorecard(topic, qna_pairs):
 
         return parsed
     except Exception as e:
-        print(f"Error generating scorecard: {e}")
+        print(f"Error generating scorecard: {repr(e)}")
         return _fallback_scorecard(answers)
 
 def generate_questions(topic):

@@ -13,7 +13,7 @@
     <span class="progress-count">{{ current }} of {{ total }}</span>
 </div>
 <div class="progress-bar">
-    <div class="progress-fill" {% if True %}style="width: {{ (current - 1) / total * 100 }}%;"{% endif %}></div>
+    <div class="progress-fill" {% if True %}style="width: {{ current / total * 100 }}%;"{% endif %}></div>
 </div>
 
 <div class="question-card">
